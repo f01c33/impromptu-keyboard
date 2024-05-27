@@ -51,7 +51,7 @@ func main() {
 	m["j"] = MIDINote{Note: 16, Velocity: vel, Duration: 100}
 	m["k"] = MIDINote{Note: 17, Velocity: vel, Duration: 100}
 	m["l"] = MIDINote{Note: 18, Velocity: vel, Duration: 100}
-	//high
+	// high
 	m["z"] = MIDINote{Note: 18, Velocity: vel, Duration: 100}
 	m["x"] = MIDINote{Note: 19, Velocity: vel, Duration: 100}
 	m["c"] = MIDINote{Note: 20, Velocity: vel, Duration: 100}
@@ -62,8 +62,15 @@ func main() {
 
 	fmt.Println("Starting sequence. Press Ctrl+C to quit...")
 
-	portmidi.Initialize()
-	defer portmidi.Terminate()
+	err := portmidi.Initialize()
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := portmidi.Terminate(); err != nil {
+			panic(err)
+		}
+	}()
 	id, _ := portmidi.DefaultOutputDeviceID()
 	out, err := portmidi.NewOutputStream(id, 1024, 0, 1, portmidi.FilterUndefined)
 	if err != nil {
@@ -133,12 +140,8 @@ func main() {
 		<-hook.Process(EvChan)
 	}()
 	defer hook.End()
-LOOP:
-	for {
-		select {
-		case <-sigint:
-			break LOOP
-		}
+	for range sigint {
+		break
 	}
 	out.Close()
 }
